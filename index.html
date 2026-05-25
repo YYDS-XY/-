@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>叙事浏览 · Story Flow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #fff8fb;
+            --card: rgba(255, 255, 255, 0.65);
+            --border: rgba(255, 255, 255, 0.6);
+            --text: #2d2d2d;
+            --sub: #7a7a7a;
+            --pink: #f8c6d8;
+            --pink-dark: #f29fc0;
+            --white: #ffffff;
+            --shadow: 0 12px 40px rgba(248, 182, 209, 0.18);
+            --blur: blur(18px);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #fff7fa 0%, #fff0f6 50%, #ffffff 100%);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 192, 220, 0.3), transparent 70%);
+            top: -200px;
+            right: -200px;
+            z-index: -1;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255, 220, 235, 0.4), transparent 70%);
+            bottom: -200px;
+            left: -200px;
+            z-index: -1;
+            animation: float 10s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(30px);
+            }
+        }
+
+        .sidebar {
+            width: 290px;
+            height: 100vh;
+            padding: 28px;
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: var(--blur);
+            border-right: 1px solid rgba(255, 255, 255, 0.5);
+            overflow-y: auto;
+            position: relative;
+            z-index: 5;
+        }
+
+        .logo {
+            margin-bottom: 35px;
+        }
+
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #f19cbc, #f7bfd4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo p {
+            color: var(--sub);
+            margin-top: 6px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .chapter-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chapter-item {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            padding: 18px;
+            cursor: pointer;
+            transition: all .35s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chapter-item::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 192, 220, 0.08), transparent);
+            opacity: 0;
+            transition: .3s;
+        }
+
+        .chapter-item:hover::before,
+        .chapter-item.active::before {
+            opacity: 1;
+        }
+
+        .chapter-item:hover {
+            transform: translateX(5px);
+            box-shadow: var(--shadow);
+        }
+
+        .chapter-item.active {
+            border-color: rgba(242, 159, 192, 0.6);
+            box-shadow: var(--shadow);
+        }
+
+        .chapter-number {
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: var(--pink-dark);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .chapter-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .chapter-desc {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--sub);
+        }
+
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            position: relative;
+            scroll-behavior: smooth;
+        }
+
+        .hero {
+            min-height: 65vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            position: relative;
+        }
+
+        .hero-card {
+            width: 100%;
+            max-width: 1100px;
+            padding: 60px;
+            background: var(--card);
+            backdrop-filter: var(--blur);
+            border: 1px solid var(--border);
+            border-radius: 38px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            animation: fadeUp .8s ease;
+        }
+
+        .hero-card::after {
+            content: '';
+            position: absolute;
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 192, 220, 0.25), transparent);
+            top: -80px;
+            right: -80px;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 999px;
+            color: var(--pink-dark);
+            font-size: 12px;
+            margin-bottom: 22px;
+            backdrop-filter: blur(10px);
+        }
+
+        .article-title {
+            font-size: 54px;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .article-sub {
+            max-width: 760px;
+            line-height: 2;
+            color: var(--sub);
+            font-size: 16px;
+        }
+
+        .content-area {
+            max-width: 1100px;
+            margin: 0 auto 80px;
+            padding: 0 40px;
+        }
+
+        .section-card {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 32px;
+            padding: 36px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            animation: fadeUp .7s ease;
+        }
+
+        .section-card h2 {
+            font-size: 30px;
+            margin-bottom: 18px;
+        }
+
+        .section-card p {
+            line-height: 2;
+            color: #555;
+            margin-bottom: 16px;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 18px;
+            margin-top: 20px;
+        }
+
+        .image-grid img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            border-radius: 24px;
+            transition: .4s ease;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .image-grid img:hover {
+            transform: scale(1.03);
+        }
+
+        .video-box {
+            overflow: hidden;
+            border-radius: 24px;
+            margin-top: 22px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        video {
+            width: 100%;
+            display: block;
+        }
+
+        .music-player {
+            margin-top: 25px;
+            background: rgba(255, 255, 255, 0.65);
+            border-radius: 20px;
+            padding: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        .timeline {
+            margin-top: 26px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--pink-dark);
+            margin-top: 8px;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 8px rgba(242, 159, 192, 0.15);
+        }
+
+        .timeline-item h4 {
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .tools {
+            position: fixed;
+            right: 25px;
+            bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 99;
+        }
+
+        .tool-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(15px);
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            font-size: 20px;
+            transition: .3s ease;
+        }
+
+        .tool-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+        }
+
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 5px;
+            width: 0;
+            background: linear-gradient(90deg, #f6b3cc, #f19cbc);
+            z-index: 999;
+            transition: width .2s;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal img {
+            width: 80%;
+            max-width: 1100px;
+            border-radius: 20px;
+            animation: fadeUp .4s ease;
+        }
+
+        .show {
+            display: flex;
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--sub);
+            padding: 30px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+                overflow: auto;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: sticky;
+                top: 0;
+            }
+
+            .article-title {
+                font-size: 36px;
+            }
+
+            .hero-card,
+            .section-card {
+                padding: 28px;
+            }
+
+            .hero {
+                padding: 20px;
+            }
+
+            .content-area {
+                padding: 0 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="reading-progress" id="progressBar"></div>
+
+    <aside class="sidebar">
+        <div class="logo">
+            <h1>Story Flow</h1>
+            <p>沉浸式 H5 叙事浏览网站<br>粉白系高级交互设计</p>
+        </div>
+
+        <div class="chapter-list">
+
+            <div class="chapter-item active" onclick="showChapter(0, this)">
+                <div class="chapter-number">Chapter 01</div>
+                <div class="chapter-title">初遇白昼</div>
+                <div class="chapter-desc">关于城市、光影与第一次相遇的故事。</div>
+            </div>
+
+            <div class="chapter-item" onclick="showChapter(1, this)">
+                <div class="chapter-number">Chapter 02</div>
+                <div class="chapter-title">海风来信</div>
+                <div class="chapter-desc">在海岸边记录下温柔的片段。</div>
+            </div>
+
+            <div class="chapter-item" onclick="showChapter(2, this)">
+                <div class="chapter-number">Chapter 03</div>
+                <div class="chapter-title">夜色序章</div>
+                <div class="chapter-desc">霓虹、音乐与深夜独白。</div>
+            </div>
+
+            <div class="chapter-item" onclick="showChapter(3, this)">
+                <div class="chapter-number">Chapter 04</div>
+                <div class="chapter-title">未来回响</div>
+                <div class="chapter-desc">记录未来与记忆之间的联系。</div>
+            </div>
+
+        </div>
+    </aside>
+
+    <main class="main" id="mainContent">
+
+        <div id="chapterContainer"></div>
+
+        <div class="footer">
+            Narrative Experience · HTML / CSS / JavaScript · 无需后端即可直接运行
+        </div>
+    </main>
+
+    <div class="tools">
+        <button class="tool-btn" onclick="toggleMusic()">🎵</button>
+        <button class="tool-btn" onclick="scrollTopSmooth()">↑</button>
+    </div>
+
+    <div class="modal" id="imageModal" onclick="closeModal()">
+        <img id="modalImage" src="" alt="preview">
+    </div>
+
+    <audio id="bgMusic" loop>
+        <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=dreams-110734.mp3"
+            type="audio/mpeg">
+    </audio>
+
+    <script>
+        const chapters = [
+            {
+                tag: '城市漫游',
+                title: '初遇白昼',
+                subtitle: '阳光从玻璃窗缓慢落下，城市的轮廓像是被粉白色柔光轻轻包裹。我们在街道之间穿行，故事开始于一个安静的午后。',
+                content: `
+        <div class="section-card">
+          <h2>光影与街道</h2>
+          <p>这是一个沉浸式叙事页面示例。你可以自由替换文字、图片、视频以及音乐内容，打造属于自己的个人故事网站、旅行记录、品牌叙事页、毕业纪念册、小说互动页面等。</p>
+          <p>页面采用玻璃拟态 + 粉白高级配色，支持动态交互、平滑动画、阅读进度、图片放大与章节切换。</p>
+
+          <div class="image-grid">
+            <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1200&auto=format&fit=crop" onclick="openModal(this.src)">
+            <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=1200&auto=format&fit=crop" onclick="openModal(this.src)">
+            <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=1200&auto=format&fit=crop" onclick="openModal(this.src)">
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h2>沉浸式视频展示</h2>
+          <p>支持插入 MP4 视频、宣传片、Vlog、短片内容，打造电影感浏览体验。</p>
+
+          <div class="video-box">
+            <video controls>
+              <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h2>故事时间线</h2>
+
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="dot"></div>
+              <div>
+                <h4>13:20 PM</h4>
+                <p>第一次看见窗边的白色光影，故事正式开始。</p>
+              </div>
+            </div>
+
+            <div class="timeline-item">
+              <div class="dot"></div>
+              <div>
+                <h4>15:40 PM</h4>
+                <p>咖啡与音乐交织，页面开始进入沉浸叙事。</p>
+              </div>
+            </div>
+
+            <div class="timeline-item">
+              <div class="dot"></div>
+              <div>
+                <h4>18:00 PM</h4>
+                <p>夕阳渐落，文字与影像成为新的记忆载体。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+            },
+
+            {
+                tag: '海岸记录',
+                title: '海风来信',
+                subtitle: '风穿过耳边时，海浪正在记录一场关于青春的对白。',
+                content: `
+        <div class="section-card">
+          <h2>海边日记</h2>
+          <p>你可以将这个网站扩展为旅行日记系统、摄影作品展示、品牌故事页等。</p>
+
+          <div class="image-grid">
+            <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop" onclick="openModal(this.src)">
+            <img src="https://images.unsplash.com/photo-1493558103817-58b2924bce98?q=80&w=1200&auto=format&fit=crop" onclick="openModal(this.src)">
+          </div>
+
+          <div class="music-player">
+            <strong>海岸背景音乐</strong>
+            <audio controls>
+              <source src="https://cdn.pixabay.com/download/audio/2022/10/25/audio_8b1f0c51f7.mp3?filename=lounge-ambient-music-124008.mp3" type="audio/mpeg">
+            </audio>
+          </div>
+        </div>
+      `
+            },
+
+            {
+                tag: '夜色城市',
+                title: '夜色序章',
+                subtitle: '霓虹与雨水在城市里缓慢流动，像一部被暂停的电影。',
+                content: `
+        <div class="section-card">
+          <h2>深夜独白</h2>
+          <p>支持滚动动画、动态加载、鼠标悬停效果与高级视觉层次。</p>
+
+          <div class="image-grid">
+            <img src="https://images.unsplash.com/photo-1519608487953-e999c86e7455?q=80&w=1200&auto=format&fit=crop" onclick="openModal(this.src)">
+            <img src="https://images.unsplash.com/photo-1508057198894-247b23fe5ade?q=80&w=1200&auto=format&fit=crop" onclick="openModal(this.src)">
+            <img src="https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=1200&auto=format&fit=crop" onclick="openModal(this.src)">
+          </div>
+        </div>
+      `
+            },
+
+            {
+                tag: '未来章节',
+                title: '未来回响',
+                subtitle: '技术与情绪结合之后，网页不再只是网页，而是情感容器。',
+                content: `
+        <div class="section-card">
+          <h2>功能拓展建议</h2>
+          <p>你还可以继续扩展以下功能：</p>
+
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="dot"></div>
+              <div>
+                <h4>AI 智能叙事</h4>
+                <p>根据用户浏览自动生成文章与背景音乐。</p>
+              </div>
+            </div>
+
+            <div class="timeline-item">
+              <div class="dot"></div>
+              <div>
+                <h4>动态粒子系统</h4>
+                <p>加入鼠标跟随粒子、樱花飘落、雪花效果等。</p>
+              </div>
+            </div>
+
+            <div class="timeline-item">
+              <div class="dot"></div>
+              <div>
+                <h4>3D 页面切换</h4>
+                <p>利用 Three.js 打造电影级翻页与场景切换。</p>
+              </div>
+            </div>
+
+            <div class="timeline-item">
+              <div class="dot"></div>
+              <div>
+                <h4>访客互动系统</h4>
+                <p>留言、点赞、弹幕、足迹记录等互动功能。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+            }
+        ];
+
+        const chapterContainer = document.getElementById('chapterContainer');
+
+        function renderChapter(index) {
+            const data = chapters[index];
+
+            chapterContainer.innerHTML = `
+      <section class="hero">
+        <div class="hero-card">
+          <div class="tag">${data.tag}</div>
+          <h1 class="article-title">${data.title}</h1>
+          <p class="article-sub">${data.subtitle}</p>
+        </div>
+      </section>
+
+      <section class="content-area">
+        ${data.content}
+      </section>
+    `;
+        }
+
+        renderChapter(0);
+
+        function showChapter(index, el) {
+            document.querySelectorAll('.chapter-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            el.classList.add('active');
+            renderChapter(index);
+
+            document.getElementById('mainContent').scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        function openModal(src) {
+            document.getElementById('imageModal').classList.add('show');
+            document.getElementById('modalImage').src = src;
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').classList.remove('show');
+        }
+
+        function scrollTopSmooth() {
+            document.getElementById('mainContent').scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        const bgMusic = document.getElementById('bgMusic');
+        let musicPlaying = false;
+
+        function toggleMusic() {
+            if (!musicPlaying) {
+                bgMusic.play();
+                musicPlaying = true;
+            } else {
+                bgMusic.pause();
+                musicPlaying = false;
+            }
+        }
+
+        const main = document.getElementById('mainContent');
+        const progressBar = document.getElementById('progressBar');
+
+        main.addEventListener('scroll', () => {
+            const scrollTop = main.scrollTop;
+            const scrollHeight = main.scrollHeight - main.clientHeight;
+            const progress = (scrollTop / scrollHeight) * 100;
+            progressBar.style.width = progress + '%';
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+
+        // 情侣纪念相册扩展功能
+        const loveQuotes = [
+            '你是我所有故事里的第一主角。',
+            '时间会流逝，但爱会留下痕迹。',
+            '每一张照片，都是一次心动回放。',
+            '和你一起的日子，像电影一样温柔。'
+        ];
+
+        let quoteIndex = 0;
+
+        setInterval(() => {
+            const quote = document.getElementById('loveQuote');
+            if (quote) {
+                quote.style.opacity = 0;
+
+                setTimeout(() => {
+                    quote.innerText = loveQuotes[quoteIndex % loveQuotes.length];
+                    quote.style.opacity = 1;
+                    quoteIndex++;
+                }, 400);
+            }
+        }, 4000);
+
+        // 鼠标粒子爱心效果
+        document.addEventListener('mousemove', (e) => {
+            const heart = document.createElement('div');
+            heart.innerHTML = '❤';
+            heart.style.position = 'fixed';
+            heart.style.left = e.clientX + 'px';
+            heart.style.top = e.clientY + 'px';
+            heart.style.fontSize = '14px';
+            heart.style.pointerEvents = 'none';
+            heart.style.color = '#f4a8c4';
+            heart.style.zIndex = '9999';
+            heart.style.opacity = '0.8';
+            heart.style.transition = 'all 1s ease';
+
+            document.body.appendChild(heart);
+
+            setTimeout(() => {
+                heart.style.transform = 'translateY(-30px) scale(1.5)';
+                heart.style.opacity = '0';
+            }, 10);
+
+            setTimeout(() => {
+                heart.remove();
+            }, 1000);
+        });
+
+    </script>
+
+    <section
+        style="position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:99;background:rgba(255,255,255,0.65);backdrop-filter:blur(15px);padding:14px 26px;border-radius:999px;box-shadow:0 8px 30px rgba(0,0,0,0.08);font-size:14px;color:#666;transition:0.4s;"
+        id="loveQuote">
+        你是我所有故事里的第一主角。
+    </section>
+
+    <section style="display:none">
+        情侣纪念相册增强版：
+        - 动态爱心粒子
+        - 情侣语录轮播
+        - 纪念日时间轴
+        - 照片故事模式
+        - 背景音乐系统
+        - 全屏照片浏览
+        - 沉浸式电影感布局
+    </section>
+
+</body>
+
+</html>
